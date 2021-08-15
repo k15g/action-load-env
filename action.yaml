@@ -1,0 +1,17 @@
+name: Load environment variables
+description: ...
+author: Erlend Klakegg Bergheim
+
+inputs:
+  path:
+    description: Environment location
+    required: false
+    default: .env
+
+branding:
+  color: green
+  icon: command
+
+runs:
+  using: node12
+  main: index.js
