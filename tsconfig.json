@@ -7,11 +7,13 @@
         "target": "es5",
         "jsx": "react",
         "allowJs": true,
+        "removeComments": true,
+        "pretty": false,
         "typeRoots": [
             "./node_modules/@types"
         ]
     },
     "include": [
-        "src/**/*.ts",
+        "src/ts/**/*.ts",
     ]
 }
