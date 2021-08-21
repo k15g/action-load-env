@@ -4,16 +4,26 @@ import * as path from 'path';
 
 export default class Loader {
 
+    debug: boolean
     path: string
+    output: fs.WriteStream
 
     constructor(default_path = '.env') {
         // Detect path
-        this.path = core.getInput('path') || default_path
+        this.path = core.getInput('path') != '' ? core.getInput('path') : default_path
+
+        core.info(`Using path '${this.path}'`)
     }
 
     execute() {
-        // Initiate output stream
+        this.output = fs.createWriteStream(process.env['GITHUB_ENV'] || 'test.txt');
+
         this.load_path()
+
+        if (core.getInput('extras') != '')
+            this.dump(core.getInput('extras'))
+
+        this.output.end()
     }
 
     load_path() {
@@ -25,19 +35,16 @@ export default class Loader {
             } else if (stat.isDirectory()) {
                 this.load_directory()
             } else {
-                core.error(`Path '${this.path}' is neither file nor folder.`)
+                core.error(`Path '${this.path}' is neither file nor folder`)
                 process.exit(1)
             }
         } else {
-            core.warning(`Path ${this.path}' not found.`)
+            core.warning(`Path ${this.path}' not found`)
         }
     }
 
     load_file() {
-        // Simply copy file content to output
-        var output = fs.createWriteStream(process.env['GITHUB_ENV'] || 'test.txt');
-        output.write(fs.readFileSync(this.path))
-        output.end()
+        this.dump(fs.readFileSync(this.path))
     }
 
     load_directory(parents: string[] = []) {
@@ -46,14 +53,24 @@ export default class Loader {
             var stat = fs.lstatSync(p);
 
             if (stat.isFile()) {
-                var value = fs.readFileSync(p).toString().trim()
-                core.exportVariable([...parents, file].join('_'), value)
+                this.value([...parents, file].join('_'), fs.readFileSync(p))
             } else if (stat.isDirectory()) {
                 this.load_directory([...parents, file])
             } else {
-                core.warning(`Path '${p}' is neither file nor folder.`)
+                core.warning(`Path '${p}' is neither file nor folder`)
             }
         });
+    }
+
+    value(key: string, value: string | Buffer) {
+        value = value.toString().trim()
+        
+        core.info(`${key} => ${value}`)
+        this.output.write(`${key}=${value}\n`)
+    }
+
+    dump(env: Buffer | string) {
+        this.output.write(env)
     }
 }
 
