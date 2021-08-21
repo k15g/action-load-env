@@ -14,9 +14,11 @@ var Loader = (function () {
         this.path = core.getInput('path') != '' ? core.getInput('path') : default_path;
     }
     Loader.prototype.execute = function () {
+        this.output = fs.createWriteStream(process.env['GITHUB_ENV'] || 'test.txt');
         this.load_path();
         if (core.getInput('extras') != '')
             this.dump(core.getInput('extras'));
+        this.output.end();
     };
     Loader.prototype.load_path = function () {
         if (fs.existsSync(this.path)) {
@@ -58,12 +60,10 @@ var Loader = (function () {
     };
     Loader.prototype.value = function (key, value) {
         console.log(key + " => " + value.toString().trim());
-        core.exportVariable(key, value.toString().trim());
+        this.output.write(key + "=" + value.toString().trim() + "\n");
     };
     Loader.prototype.dump = function (env) {
-        var output = fs.createWriteStream(process.env['GITHUB_ENV'] || 'test.txt');
-        output.write(env);
-        output.end();
+        this.output.write(env);
     };
     return Loader;
 }());
