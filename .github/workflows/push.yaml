@@ -1,6 +1,10 @@
 name: Build action
 
-on: [push]
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build:
@@ -17,10 +21,17 @@ jobs:
     - name: Build
       run: make build
 
+    - name: Detect channel
+      uses: actions/github-script@v4
+      with:
+        script: |
+          var channel = context.ref.startsWith('refs/tags/v') ? context.ref.replace('refs/tags/', '').replace(/\.\d+/g, '') : 'edge';
+          core.exportVariable('CHANNEL', channel);
+
     - name: Deploy
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./dist
-        publish_branch: edge
+        publish_branch: ${{ env.CHANNEL }}
         enable_jekyll: true
