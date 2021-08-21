@@ -1,40 +1,60 @@
+import * as core from '@actions/core'
 import * as fs from 'fs';
 import * as path from 'path';
 
-// Initiate output stream
-var output = fs.createWriteStream(process.env['GITHUB_ENV'] || 'test.txt');
+export default class Loader {
 
+    path: string
 
-const input_path = process.env['INPUT_PATH'] || '.env'
+    constructor(default_path = '.env') {
+        // Detect path
+        this.path = core.getInput('path') || default_path
+    }
 
-if (fs.existsSync(input_path)) {
-    var stat = fs.lstatSync(input_path)
+    execute() {
+        // Initiate output stream
+        this.load_path()
+    }
 
-    if (stat.isFile()) {
-        // Simply copy file content to output
-        output.write(fs.readFileSync(input_path))
-    } else if (stat.isDirectory()) {
-        fs.readdirSync(input_path).forEach(file => {
-            var p = path.join(input_path, file)
-            var ps = fs.lstatSync(p);
-
-            if (ps.isFile()) {
-                var value = fs.readFileSync(p).toString().trim()
-                output.write(`${file}=${value}\n`)
-            } else if (ps.isDirectory()) {
-                // TODO Handle directories
+    load_path() {
+        if (fs.existsSync(this.path)) {
+            var stat = fs.lstatSync(this.path)
+        
+            if (stat.isFile()) {
+                this.load_file()
+            } else if (stat.isDirectory()) {
+                this.load_directory()
             } else {
-                // TODO Write warning
+                core.error(`Path '${this.path}' is neither file nor folder.`)
+                process.exit(1)
+            }
+        } else {
+            core.warning(`Path ${this.path}' not found.`)
+        }
+    }
+
+    load_file() {
+        // Simply copy file content to output
+        var output = fs.createWriteStream(process.env['GITHUB_ENV'] || 'test.txt');
+        output.write(fs.readFileSync(this.path))
+        output.end()
+    }
+
+    load_directory(parents: string[] = []) {
+        fs.readdirSync(path.join(this.path, path.join(...parents))).sort().forEach(file => {
+            var p = path.join(this.path, path.join(...parents), file)
+            var stat = fs.lstatSync(p);
+
+            if (stat.isFile()) {
+                var value = fs.readFileSync(p).toString().trim()
+                core.exportVariable([...parents, file].join('_'), value)
+            } else if (stat.isDirectory()) {
+                this.load_directory([...parents, file])
+            } else {
+                core.warning(`Path '${p}' is neither file nor folder.`)
             }
         });
-    } else {
-        console.log(`${input_path} is neither file nor folder.`)
-        process.exit(1)
     }
-} else {
-    console.log(`'${input_path}' not found.`)
 }
 
-output.end()
-
-// console.log(process.env)
+new Loader().execute()
