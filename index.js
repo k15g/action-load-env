@@ -15,6 +15,8 @@ var Loader = (function () {
     }
     Loader.prototype.execute = function () {
         this.load_path();
+        if (core.getInput('extras'))
+            this.dump(core.getInput('extras'));
     };
     Loader.prototype.load_path = function () {
         if (fs.existsSync(this.path)) {
@@ -35,9 +37,7 @@ var Loader = (function () {
         }
     };
     Loader.prototype.load_file = function () {
-        var output = fs.createWriteStream(process.env['GITHUB_ENV'] || 'test.txt');
-        output.write(fs.readFileSync(this.path));
-        output.end();
+        this.dump(fs.readFileSync(this.path));
     };
     Loader.prototype.load_directory = function (parents) {
         var _this = this;
@@ -56,6 +56,11 @@ var Loader = (function () {
                 core.warning("Path '" + p + "' is neither file nor folder.");
             }
         });
+    };
+    Loader.prototype.dump = function (env) {
+        var output = fs.createWriteStream(process.env['GITHUB_ENV'] || 'test.txt');
+        output.write(env);
+        output.end();
     };
     return Loader;
 }());

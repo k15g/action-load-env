@@ -7,6 +7,9 @@ inputs:
     description: Environment location
     required: false
     default: .env
+  extras:
+    description: Extra variables
+    required: false
 
 branding:
   color: green
