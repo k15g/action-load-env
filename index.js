@@ -12,6 +12,7 @@ var Loader = (function () {
     function Loader(default_path) {
         if (default_path === void 0) { default_path = '.env'; }
         this.path = core.getInput('path') != '' ? core.getInput('path') : default_path;
+        core.info("Using path '" + this.path + "'");
     }
     Loader.prototype.execute = function () {
         this.output = fs.createWriteStream(process.env['GITHUB_ENV'] || 'test.txt');
@@ -30,12 +31,12 @@ var Loader = (function () {
                 this.load_directory();
             }
             else {
-                core.error("Path '" + this.path + "' is neither file nor folder.");
+                core.error("Path '" + this.path + "' is neither file nor folder");
                 process.exit(1);
             }
         }
         else {
-            core.warning("Path " + this.path + "' not found.");
+            core.warning("Path " + this.path + "' not found");
         }
     };
     Loader.prototype.load_file = function () {
@@ -54,13 +55,14 @@ var Loader = (function () {
                 _this.load_directory(__spreadArray(__spreadArray([], parents), [file]));
             }
             else {
-                core.warning("Path '" + p + "' is neither file nor folder.");
+                core.warning("Path '" + p + "' is neither file nor folder");
             }
         });
     };
     Loader.prototype.value = function (key, value) {
-        console.log(key + " => " + value.toString().trim());
-        this.output.write(key + "=" + value.toString().trim() + "\n");
+        value = value.toString().trim();
+        core.info(key + " => " + value);
+        this.output.write(key + "=" + value + "\n");
     };
     Loader.prototype.dump = function (env) {
         this.output.write(env);
