@@ -11,11 +11,11 @@ var path = require("path");
 var Loader = (function () {
     function Loader(default_path) {
         if (default_path === void 0) { default_path = '.env'; }
-        this.path = core.getInput('path') || default_path;
+        this.path = core.getInput('path') != '' ? core.getInput('path') : default_path;
     }
     Loader.prototype.execute = function () {
         this.load_path();
-        if (core.getInput('extras'))
+        if (core.getInput('extras') != '')
             this.dump(core.getInput('extras'));
     };
     Loader.prototype.load_path = function () {
@@ -46,8 +46,7 @@ var Loader = (function () {
             var p = path.join(_this.path, path.join.apply(path, parents), file);
             var stat = fs.lstatSync(p);
             if (stat.isFile()) {
-                var value = fs.readFileSync(p).toString().trim();
-                core.exportVariable(__spreadArray(__spreadArray([], parents), [file]).join('_'), value);
+                _this.value(__spreadArray(__spreadArray([], parents), [file]).join('_'), fs.readFileSync(p));
             }
             else if (stat.isDirectory()) {
                 _this.load_directory(__spreadArray(__spreadArray([], parents), [file]));
@@ -56,6 +55,10 @@ var Loader = (function () {
                 core.warning("Path '" + p + "' is neither file nor folder.");
             }
         });
+    };
+    Loader.prototype.value = function (key, value) {
+        console.log(key + " => " + value.toString().trim());
+        core.exportVariable(key, value.toString().trim());
     };
     Loader.prototype.dump = function (env) {
         var output = fs.createWriteStream(process.env['GITHUB_ENV'] || 'test.txt');
