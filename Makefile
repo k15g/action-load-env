@@ -1,7 +1,7 @@
 build:
 	@rm -rf dist
 	@cp -r src/resources dist
-	@cp package.json dist/
+	@cp LICENSE package.json dist/
 	@npm install --only=prod --prefix ./dist
 	@npx tsc
 
